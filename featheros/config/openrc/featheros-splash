@@ -1,0 +1,38 @@
+#!/sbin/openrc-run
+# featheros-splash — starts the ASCII spinning-feather boot splash
+# as early as the console is usable, and leaves it running until
+# featheros-splash-stop (a separate, later service) kills it.
+#
+# Install:
+#   cp featheros-splash /etc/init.d/featheros-splash
+#   chmod +x /etc/init.d/featheros-splash
+#   rc-update add featheros-splash boot
+#
+# Assumes splash-feather.sh has been installed to /usr/bin/ as part
+# of the base image build (see package-lists/ and the build scripts).
+
+name="FeatherOS splash"
+command="/usr/bin/featheros-splash.sh"
+pidfile="/run/featheros-splash.pid"
+
+depend() {
+	# Start as early as the console is usable. The splash script
+	# itself launches the integrity check as a background job and
+	# renders its [OK]/[MALFORMED] results live underneath the
+	# feather — checks and animation run concurrently, so there's
+	# no separate pre-splash check service to order against anymore.
+	after sysfs
+	keyword -prefix
+}
+
+start() {
+	ebegin "Starting FeatherOS splash"
+	"$command" start
+	eend $?
+}
+
+stop() {
+	ebegin "Stopping FeatherOS splash"
+	"$command" stop
+	eend $?
+}

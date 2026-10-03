@@ -1,0 +1,37 @@
+#!/sbin/openrc-run
+# featheros-splash-stop — stops the boot splash once the system has
+# actually finished booting. Added to the "default" runlevel (not
+# "boot"), and ordered after every other default-runlevel service,
+# so it's effectively the last thing that runs before the login
+# prompt / display manager takes over.
+#
+# Install:
+#   cp featheros-splash-stop /etc/init.d/featheros-splash-stop
+#   chmod +x /etc/init.d/featheros-splash-stop
+#   rc-update add featheros-splash-stop default
+#
+# For the desktop variant: if a display manager service exists,
+# add "before xdm" (or whatever the DM's service name is) here so
+# the splash is gone before the DM draws the login screen. For
+# headless: this runs just before the getty/login prompt instead.
+
+name="FeatherOS splash (stop)"
+command="/usr/bin/featheros-splash.sh"
+
+depend() {
+	# Depending on every other default-runlevel service, rather than
+	# naming one specific service, is what pushes this to run last —
+	# OpenRC won't start it until everything it needs is up.
+	need localmount net
+	after *
+	keyword -prefix
+}
+
+start() {
+	ebegin "Clearing FeatherOS splash (boot complete)"
+	"$command" stop
+	eend $?
+}
+
+# No stop() needed — this service doesn't run anything persistent;
+# its "start" action (stopping the splash) is a one-shot.
