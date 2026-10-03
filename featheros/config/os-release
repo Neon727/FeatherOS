@@ -1,0 +1,9 @@
+NAME="FeatherOS"
+PRETTY_NAME="FeatherOS"
+ID=featheros
+VERSION="0.1"
+VERSION_ID="0.1"
+BUILD_ID="lfs-base"
+HOME_URL="https://example.com/featheros"
+SUPPORT_URL="https://example.com/featheros/support"
+BUG_REPORT_URL="https://example.com/featheros/issues"
