@@ -2,7 +2,7 @@
 # These come from the core LFS build (Stage 1-3) and are common to
 # any bootable system regardless of GUI/headless split.
 
-linux-kernel         # custom-configured per config/kernel-notes-public.md
+linux-kernel         # custom-configured per config/kernel-notes.md
 musl                  # used across both variants
 apk-tools              # package manager — shared across both variants
 bash
