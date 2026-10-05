@@ -1,0 +1,22 @@
+# Desktop variant — additions on top of base.txt
+# General-purpose daily-driver GUI, tuned to stay light on 512MB.
+#
+# No display manager — X auto-starts on login instead (see
+# config/etc-profile.d-start-xorg.sh). Saves the RAM/complexity of a
+# DM for something that only launches a WM anyway.
+#
+# Default app set kept deliberately bare — ship the minimum needed
+# for the desktop to actually function, and let people install
+# whatever else they want afterward via apk. The base image is not
+# trying to be a fully loaded "comes with everything" distro.
+
+xorg-server
+i3-wm
+i3status              # i3's default status bar module (feeds into i3bar below)
+i3bar                 # usually bundled with i3-wm, listed separately for clarity
+alsa-utils            # audio, if target hardware has sound
+networkmanager        # easier day-to-day Wi-Fi/network handling for general users
+
+# That's it for the default image. Browser, file manager, PDF/image
+# viewers etc. are not bundled by default — install via apk
+# post-install instead (e.g. `apk add firefox-esr`).
