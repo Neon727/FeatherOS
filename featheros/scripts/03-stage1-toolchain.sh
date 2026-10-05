@@ -52,6 +52,22 @@ esac
 
 mkdir -p "$SOURCES" "$TOOLS"
 
+# --- Helpers ---
+
+# Tests whether an archive is actually complete/valid, not just
+# present on disk. A file existing is NOT the same as a file being
+# a good download — an interrupted transfer leaves a real file at a
+# real path, just a truncated/corrupt one. This is what the bug fix
+# actually checks before trusting any "already downloaded" file.
+verify_archive_integrity() {
+    local fname="$1"
+    case "$fname" in
+        *.tar.xz) xz -t "$fname" >/dev/null 2>&1 ;;
+        *.tar.gz) gzip -t "$fname" >/dev/null 2>&1 ;;
+        *) echo "  [WARN] don't know how to verify integrity of $fname — assuming OK" >&2; return 0 ;;
+    esac
+}
+
 # --- Step functions ---
 
 download_sources() {
@@ -69,10 +85,20 @@ download_sources() {
         local url="${entry##*|}"
 
         if [ -f "$fname" ]; then
-            echo "  already downloaded: $fname"
-        else
+            echo "  found existing file: $fname — verifying it's not a partial/corrupt download..."
+            if ! verify_archive_integrity "$fname"; then
+                echo "  $fname is corrupt or incomplete (likely an interrupted earlier download) — removing and re-fetching." >&2
+                rm -f "$fname"
+            fi
+        fi
+
+        if [ ! -f "$fname" ]; then
             echo "  downloading: $fname"
             curl -L --fail -o "$fname" "$url" || { echo "  download failed: $fname" >&2; return 1; }
+            if ! verify_archive_integrity "$fname"; then
+                echo "  freshly downloaded $fname still fails integrity check — download itself may be bad (bad mirror, flaky connection). Try again, or check your network." >&2
+                return 1
+            fi
         fi
 
         # First time we see this file, record its hash. If it's
