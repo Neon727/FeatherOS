@@ -159,9 +159,22 @@ build_musl() {
 build_gcc() {
     local src="$SOURCES/gcc-${GCC_VER}"
     cd "$src" || return 1
-    # Fetches gmp/mpfr/mpc into the gcc source tree so they build
-    # alongside it — avoids depending on the host's versions of these.
-    ./contrib/download_prerequisites || return 1
+
+    # Prefer Alpine's own gmp/mpfr/mpc/isl packages over GCC's
+    # contrib/download_prerequisites script, which fetches its own
+    # bundled copies directly from gcc.gnu.org — often painfully
+    # slow compared to the local apk mirror. If the apk packages
+    # install successfully, GCC's configure auto-detects and uses
+    # the system versions, and we skip the slow external download
+    # entirely. Falls back to download_prerequisites only if the
+    # apk packages aren't available for some reason.
+    if apk add gmp-dev mpfr-dev mpc1-dev isl-dev 2>/dev/null; then
+        echo "  using system gmp/mpfr/mpc/isl via apk — skipping GCC's own prerequisite download"
+    else
+        echo "  system packages unavailable — falling back to contrib/download_prerequisites (slower, fetches from gcc.gnu.org)" >&2
+        ./contrib/download_prerequisites || return 1
+    fi
+
     mkdir -p build && cd build || return 1
     "$src/configure" \
         --prefix="$TOOLS" \
