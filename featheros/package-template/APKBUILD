@@ -13,7 +13,7 @@ pkgrel=0                        # package revision (bump if you rebuild the
                                  # same pkgver with build changes only)
 pkgdesc="One-line description of what this does"
 url="https://example.com"       # project homepage
-arch="x86_64"                   # FeatherOS targets x86_64 only (see docs/decisions.md)
+arch="x86_64"                   # FeatherOS targets x86_64 only
 license="MIT"                   # whatever license the software actually uses
 
 # --- Dependencies ---
