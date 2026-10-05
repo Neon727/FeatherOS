@@ -1,0 +1,46 @@
+# Template APKBUILD — copy this into a new directory named after your
+# package (e.g. package-template/ -> my-app/) and fill in the fields.
+# One directory per package; `abuild` is run from inside it.
+#
+# Reference: this follows Alpine's APKBUILD format, since apk-tools
+# and abuild are Alpine's tooling. Full field reference:
+# https://wiki.alpinelinux.org/wiki/APKBUILD_Reference
+
+# --- Required metadata ---
+pkgname=my-app                  # package name, must match the directory name
+pkgver=0.1.0                    # version — bump this every release
+pkgrel=0                        # package revision (bump if you rebuild the
+                                 # same pkgver with build changes only)
+pkgdesc="One-line description of what this does"
+url="https://example.com"       # project homepage
+arch="x86_64"                   # FeatherOS targets x86_64 only (see docs/decisions.md)
+license="MIT"                   # whatever license the software actually uses
+
+# --- Dependencies ---
+depends=""                      # runtime deps, e.g. "musl libcurl"
+makedepends=""                  # build-time-only deps, e.g. "gcc make"
+
+# --- Source ---
+# Local source (a tarball you provide) or a URL abuild will fetch.
+# If fetching remotely, abuild needs a matching sha512sum below —
+# generate it with: abuild checksum (after placing the source).
+source=""
+sha512sums=""
+
+# --- Build steps ---
+# These run inside abuild's clean build environment. Adjust for
+# whatever the actual project's build system is (make, cmake, a
+# plain script, etc.) — this is just a generic autotools-style example.
+build() {
+	cd "$builddir"
+	./configure --prefix=/usr
+	make
+}
+
+# --- Install step ---
+# Installs into a staging dir ($pkgdir) that abuild packages into the
+# final .apk — never install to the real filesystem here.
+package() {
+	cd "$builddir"
+	make DESTDIR="$pkgdir" install
+}
