@@ -1,0 +1,5 @@
+# Headless variant — additions on top of base.txt
+# No X11, no GUI. Tuned for servers/NAS/embedded repurposing of old hardware.
+
+dcron                # lightweight cron implementation
+rsync
