@@ -98,6 +98,13 @@ build_busybox() {
     # Static binary — the temp system has no shared libs installed
     # yet, so busybox needs to be fully self-contained.
     sed -i 's/^# CONFIG_STATIC is not set/CONFIG_STATIC=y/' .config
+    # Disable the tc (traffic control) applet — defconfig enables it
+    # by default, but it needs kernel networking headers (struct
+    # tc_cbq_wrropt etc.) more complete than our minimal
+    # headers_install output provides. Not needed for a temp
+    # bootstrap system anyway, so just drop it rather than chasing
+    # kernel header completeness for something unused here.
+    sed -i 's/^CONFIG_TC=y/# CONFIG_TC is not set/' .config
     make -j"$JOBS" || return 1
 }
 
