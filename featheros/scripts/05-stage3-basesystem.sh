@@ -76,6 +76,22 @@ configure_repositories() {
         echo "Host /etc/apk/repositories not found — can't determine mirror." >&2
         return 1
     fi
+
+    # apk verifies package signatures against trusted keys in
+    # /etc/apk/keys/ — without copying the host's own keys into the
+    # new root, bootstrapping into an EMPTY root has no trusted keys
+    # at all, so apk refuses everything as "UNTRUSTED signature"
+    # (which then surfaces confusingly as "no such package", since
+    # it won't use an index it doesn't trust). This is the same step
+    # Alpine's own official rootfs-bootstrap tooling does.
+    if [ -d /etc/apk/keys ]; then
+        mkdir -p "$LFS_ROOT/etc/apk/keys"
+        cp -v /etc/apk/keys/*.pub "$LFS_ROOT/etc/apk/keys/" 2>/dev/null
+        echo "  copied host's apk trust keys into \$LFS_ROOT/etc/apk/keys/"
+    else
+        echo "Host /etc/apk/keys not found — can't establish trust for bootstrapped packages." >&2
+        return 1
+    fi
 }
 
 bootstrap_base_packages() {
