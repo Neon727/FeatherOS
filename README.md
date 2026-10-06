@@ -1,5 +1,7 @@
 # FeatherOS
 
+*Newer software for older hardware.*
+
 A custom Linux distro built via Linux From Scratch (LFS) for the
 early stages (toolchain, minimal temp system), then bootstrapped via
 `apk` for the real base system — leaning on Alpine's existing
@@ -41,17 +43,17 @@ Two variants:
 5. **Stage 2: temp system** (`04-stage2-tempsystem.sh`) — builds a
    minimal chroot-able system using static busybox, built with the
    Stage 1 toolchain.
-6. **Stage 3: base system** (`09-stage3-basesystem.sh`) — bootstraps
+6. **Stage 3: base system** (`05-stage3-basesystem.sh`) — bootstraps
    the real base system via `apk` (`alpine-base` + `openrc`), the
    same method Alpine's own official tooling uses to build root
    filesystems.
-7. **Initramfs** (`08-build-initramfs.sh`) — packages busybox + the
+7. **Initramfs** (`06-build-initramfs.sh`) — packages busybox + the
    init script + integrity-check scripts into the cpio+gzip image the
    kernel loads at boot.
-8. **ISO build** (`07-build-iso.sh`) — stages the built root + kernel
+8. **ISO build** (`09-build-iso.sh`) — stages the built root + kernel
    + initramfs, writes `grub.cfg`, runs `grub-mkrescue` for a hybrid
    BIOS+UEFI bootable image, then embeds a checksum
-   (`06-embed-iso-checksum.sh`) as the final step.
+   (`08-embed-iso-checksum.sh`) as the final step.
 
 Boot-time behavior, once an ISO is built:
 - **`initramfs-init.sh`** runs first (PID 1), checks for the
@@ -59,7 +61,7 @@ Boot-time behavior, once an ISO is built:
 - If set, **`iso-integrity-check.sh`** verifies the booted media
   against its embedded checksum — passes silently, or shows a
   warning with a y/n prompt on mismatch
-- **`boot-integrity-check.sh`** + **`05-generate-integrity-manifest.sh`**
+- **`boot-integrity-check.sh`** + **`07-generate-integrity-manifest.sh`**
   do the same idea for individual critical files on the *installed*
   system — severity-tagged (a critical failure halts boot into a
   rescue shell, a warning-level one just shows and continues)
@@ -70,18 +72,18 @@ Boot-time behavior, once an ISO is built:
 ## Structure
 
 ```
-featheros/
+distro-project/
 ├── scripts/
 │   ├── 00-host-prep.sh
 │   ├── 01-setup-abuild.sh
 │   ├── 02-get-started.sh
 │   ├── 03-stage1-toolchain.sh
 │   ├── 04-stage2-tempsystem.sh
-│   ├── 05-generate-integrity-manifest.sh   (build-time)
-│   ├── 06-embed-iso-checksum.sh            (build-time)
-│   ├── 07-build-iso.sh
-│   ├── 08-build-initramfs.sh
-│   ├── 09-stage3-basesystem.sh
+│   ├── 05-stage3-basesystem.sh
+│   ├── 06-build-initramfs.sh
+│   ├── 07-generate-integrity-manifest.sh   (build-time)
+│   ├── 08-embed-iso-checksum.sh            (build-time)
+│   ├── 09-build-iso.sh
 │   ├── boot-integrity-check.sh             (boot-time)
 │   ├── initramfs-init.sh                   (boot-time, becomes /init)
 │   ├── iso-integrity-check.sh              (boot-time)
@@ -91,7 +93,7 @@ featheros/
 │       ├── checkpoint.sh    # save/resume state for long build stages
 │       └── colors.sh        # shared colored status tags
 ├── config/
-│   ├── kernel-notes.md
+│   ├── kernel-notes-public.md
 │   ├── os-release
 │   ├── etc-motd
 │   ├── etc-issue
@@ -114,6 +116,12 @@ All stage scripts support `--status` and `--reset [step]` for
 checking progress and redoing individual steps without starting a
 whole stage over.
 
+## Status
+
+See `CHECKLIST.md` for what's built vs. actually verified on real
+hardware yet — a lot of the pipeline is written and logic-tested but
+hasn't been run end-to-end.
+
 ## License
 
 MIT — see `LICENSE`. Covers FeatherOS's own scripts, configs,
@@ -121,7 +129,7 @@ branding, and docs. Third-party components pulled in by the build
 (Linux kernel, GNU toolchain, musl, Alpine packages) keep their own
 existing licenses.
 
-Built ISOs aren't committed to this repo— they're
+Built ISOs aren't committed to this repo (see `.gitignore`) — they're
 published via GitHub Releases instead, alongside a sha256 checksum,
 so the repo stays lightweight and the release history stays clean.
 
