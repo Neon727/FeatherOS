@@ -160,14 +160,6 @@ build_gcc() {
     local src="$SOURCES/gcc-${GCC_VER}"
     cd "$src" || return 1
 
-    # Prefer Alpine's own gmp/mpfr/mpc/isl packages over GCC's
-    # contrib/download_prerequisites script, which fetches its own
-    # bundled copies directly from gcc.gnu.org — often painfully
-    # slow compared to the local apk mirror. If the apk packages
-    # install successfully, GCC's configure auto-detects and uses
-    # the system versions, and we skip the slow external download
-    # entirely. Falls back to download_prerequisites only if the
-    # apk packages aren't available for some reason.
     if apk add gmp-dev mpfr-dev mpc1-dev isl-dev 2>/dev/null; then
         echo "  using system gmp/mpfr/mpc/isl via apk — skipping GCC's own prerequisite download"
     else
@@ -176,17 +168,11 @@ build_gcc() {
     fi
 
     mkdir -p build && cd build || return 1
-    # --with-sysroot alone isn't fully respected by a NATIVE build
-    # (same target triple as the host) the way it is for a true
-    # cross-compiler — GCC can still fall back to the host's
-    # /usr/include for some lookups. --with-native-system-header-dir
-    # is the flag that actually pins a native-triple build to our
-    # isolated $TOOLS/include instead, which is what we actually want
-    # (our own musl headers, not the host Alpine's).
+
     "$src/configure" \
         --prefix="$TOOLS" \
         --with-sysroot="$TOOLS" \
-        --with-native-system-header-dir="$TOOLS/include" \
+        --with-native-system-header-dir=/include \
         --disable-multilib \
         --disable-nls \
         --enable-languages=c,c++ || return 1
