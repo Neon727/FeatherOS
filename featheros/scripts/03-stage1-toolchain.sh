@@ -173,6 +173,7 @@ build_gcc() {
         --prefix="$TOOLS" \
         --with-sysroot="$TOOLS" \
         --with-native-system-header-dir=/include \
+        --disable-bootstrap \
         --disable-multilib \
         --disable-nls \
         --enable-languages=c,c++ || return 1
