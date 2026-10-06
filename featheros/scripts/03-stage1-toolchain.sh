@@ -176,9 +176,17 @@ build_gcc() {
     fi
 
     mkdir -p build && cd build || return 1
+    # --with-sysroot alone isn't fully respected by a NATIVE build
+    # (same target triple as the host) the way it is for a true
+    # cross-compiler — GCC can still fall back to the host's
+    # /usr/include for some lookups. --with-native-system-header-dir
+    # is the flag that actually pins a native-triple build to our
+    # isolated $TOOLS/include instead, which is what we actually want
+    # (our own musl headers, not the host Alpine's).
     "$src/configure" \
         --prefix="$TOOLS" \
         --with-sysroot="$TOOLS" \
+        --with-native-system-header-dir="$TOOLS/include" \
         --disable-multilib \
         --disable-nls \
         --enable-languages=c,c++ || return 1
