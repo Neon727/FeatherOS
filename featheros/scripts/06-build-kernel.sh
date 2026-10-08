@@ -54,15 +54,29 @@ check_prerequisites() {
     require_root || return 1
     [ -d "$KSRC" ] || { echo "Kernel source not found at $KSRC — run Stage 1 first." >&2; return 1; }
     [ -x "$LFS_ROOT/sbin/apk" ] || { echo "Base system root not found at $LFS_ROOT — run Stage 3 first." >&2; return 1; }
-    for tool in bc flex bison; do
-        command -v "$tool" >/dev/null 2>&1 || { echo "Missing build tool: $tool (apk add $tool)" >&2; return 1; }
+    
+    for tool in bc flex bison find; do
+        command -v "$tool" >/dev/null 2>&1 || { echo "Missing build tool: $tool (apk add$tool)" >&2; return 1; }
     done
-    echo "  kernel source: ok, base system root: ok, build tools: ok"
+
+    # Check for required development headers on host
+    if [ -f /etc/alpine-release ]; then
+        for pkg in openssl-dev elfutils-dev findutils; do
+            apk info -e "$pkg" >/dev/null 2>&1 || { echo "Installing missing Alpine dependency: $pkg"; apk add "$pkg" || return 1; }
+        done
+    fi
+
+    echo "  kernel source: ok, base system root: ok, build tools & host libraries: ok"
 }
 
 configure_kernel() {
     cd "$KSRC" || return 1
     make defconfig || return 1
+
+    # Ensure arch-specific headers are explicitly placed in tools/include
+    # to prevent missing asm/types.h in nested sub-makes on Musl/Alpine host
+    mkdir -p tools/include/asm
+    cp -r tools/arch/x86/include/asm/* tools/include/asm/ 2>/dev/null || true
 
     # Targeted tweaks on top of defconfig, matching
     # config/kernel-notes-public.md. scripts/config is the kernel's
@@ -72,6 +86,10 @@ configure_kernel() {
     ./scripts/config --enable CONFIG_HIGHMEM64G 2>/dev/null || true   # only meaningful on some configs; harmless if absent
     ./scripts/config --disable CONFIG_DEBUG_INFO
     ./scripts/config --disable CONFIG_DEBUG_KERNEL
+
+    # Disable build-time certificate signing requirements
+    ./scripts/config --set-str CONFIG_SYSTEM_TRUSTED_KEYS ""
+    ./scripts/config --set-str CONFIG_SYSTEM_REVOCATION_KEYS ""
 
     make olddefconfig || return 1
     echo "  kernel configured (defconfig + zram/debug-symbol tweaks)"
@@ -101,7 +119,7 @@ install_kernel() {
 verify_kernel() {
     [ -f "$LFS_ROOT/boot/vmlinuz" ] || { echo "vmlinuz not found after install" >&2; return 1; }
     echo "  checking kernel image..."
-    file "$LFS_ROOT/boot/vmlinuz" 2>/dev/null || ls -lh "$LFS_ROOT/boot/vmlinuz"
+    file "$LFS_ROOT/boot/vmlinuz" 2>/dev/null \vert{}\vert{} ls -lh "$LFS_ROOT/boot/vmlinuz"
     local mod_count
     mod_count=$(find "$LFS_ROOT/lib/modules" -name '*.ko*' 2>/dev/null | wc -l)
     echo "  module files installed: $mod_count"
@@ -114,7 +132,7 @@ echo "FeatherOS kernel build"
 echo "LFS_ROOT=$LFS_ROOT  JOBS=$JOBS"
 echo
 
-run_step "check-prerequisites"  check_prerequisites
+run_step "check-prerequisites" check_prerequisites
 run_step "configure-kernel"     configure_kernel
 run_step "build-kernel"         build_kernel
 run_step "install-kernel"       install_kernel
