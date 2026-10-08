@@ -32,7 +32,7 @@ set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export LFS_ROOT="${LFS_ROOT:-/mnt/lfs}"
-ISO_STAGE="$LFS_ROOT/iso-stage"
+ISO_STAGE="$(dirname "$LFS_ROOT")/featheros-iso-stage"
 
 source "$SCRIPT_DIR/lib/checkpoint.sh"
 
