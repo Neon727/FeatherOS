@@ -47,13 +47,24 @@ Two variants:
    the real base system via `apk` (`alpine-base` + `openrc`), the
    same method Alpine's own official tooling uses to build root
    filesystems.
-7. **Initramfs** (`06-build-initramfs.sh`) — packages busybox + the
+7. **Kernel build** (`06-build-kernel.sh`) — compiles the actual
+   bootable kernel (`bzImage`) from Stage 1's kernel source and
+   installs its modules into the Stage 3 base system root. (Stage 1
+   only extracts userspace API headers via `headers_install` — this
+   is the step that produces a real, bootable kernel image.)
+8. **Branding/config install** (`07-install-branding.sh`) — copies
+   the splash, OpenRC services, MOTD, issue banner, os-release, and
+   X auto-start script into the built root, and enables the splash
+   services via `rc-update` inside a chroot. These exist as source
+   files in this repo but don't install themselves — this is the
+   step that actually puts them on the system being built.
+9. **Initramfs** (`08-build-initramfs.sh`) — packages busybox + the
    init script + integrity-check scripts into the cpio+gzip image the
    kernel loads at boot.
-8. **ISO build** (`09-build-iso.sh`) — stages the built root + kernel
-   + initramfs, writes `grub.cfg`, runs `grub-mkrescue` for a hybrid
-   BIOS+UEFI bootable image, then embeds a checksum
-   (`08-embed-iso-checksum.sh`) as the final step.
+10. **ISO build** (`11-build-iso.sh`) — stages the built root + kernel
+    + initramfs, writes `grub.cfg`, runs `grub-mkrescue` for a hybrid
+    BIOS+UEFI bootable image, then embeds a checksum
+    (`10-embed-iso-checksum.sh`) as the final step.
 
 Boot-time behavior, once an ISO is built:
 - **`initramfs-init.sh`** runs first (PID 1), checks for the
@@ -61,7 +72,7 @@ Boot-time behavior, once an ISO is built:
 - If set, **`iso-integrity-check.sh`** verifies the booted media
   against its embedded checksum — passes silently, or shows a
   warning with a y/n prompt on mismatch
-- **`boot-integrity-check.sh`** + **`07-generate-integrity-manifest.sh`**
+- **`boot-integrity-check.sh`** + **`09-generate-integrity-manifest.sh`**
   do the same idea for individual critical files on the *installed*
   system — severity-tagged (a critical failure halts boot into a
   rescue shell, a warning-level one just shows and continues)
@@ -80,10 +91,12 @@ distro-project/
 │   ├── 03-stage1-toolchain.sh
 │   ├── 04-stage2-tempsystem.sh
 │   ├── 05-stage3-basesystem.sh
-│   ├── 06-build-initramfs.sh
-│   ├── 07-generate-integrity-manifest.sh   (build-time)
-│   ├── 08-embed-iso-checksum.sh            (build-time)
-│   ├── 09-build-iso.sh
+│   ├── 06-build-kernel.sh
+│   ├── 07-install-branding.sh
+│   ├── 08-build-initramfs.sh
+│   ├── 09-generate-integrity-manifest.sh   (build-time)
+│   ├── 10-embed-iso-checksum.sh            (build-time)
+│   ├── 11-build-iso.sh
 │   ├── boot-integrity-check.sh             (boot-time)
 │   ├── initramfs-init.sh                   (boot-time, becomes /init)
 │   ├── iso-integrity-check.sh              (boot-time)
