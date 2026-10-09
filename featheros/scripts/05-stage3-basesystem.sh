@@ -92,6 +92,10 @@ configure_repositories() {
         echo "Host /etc/apk/keys not found — can't establish trust for bootstrapped packages." >&2
         return 1
     fi
+    if [ -f /etc/resolv.conf ]; then
+    cp -L /etc/resolv.conf "$LFS_ROOT/etc/resolv.conf"
+    echo "  copied host resolv.conf into \$LFS_ROOT/etc/resolv.conf"
+    fi
 }
 
 bootstrap_base_packages() {
