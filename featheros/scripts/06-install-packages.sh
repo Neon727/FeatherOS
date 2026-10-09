@@ -89,6 +89,13 @@ check_prerequisites() {
     echo "$VARIANT" > "$VARIANT_FILE"
     echo "  base system root: ok, package lists: ok, variant: $VARIANT"
 }
+setup_chroot_dns() {
+    require_root || return 1
+    mkdir -p "$LFS_ROOT/etc"
+    # Copy the host's resolver config into the chroot
+    cp -L /etc/resolv.conf "$LFS_ROOT/etc/resolv.conf"
+    echo "  copied host resolv.conf into $LFS_ROOT/etc/"
+}
 
 install_base_packages() {
     require_root || return 1
@@ -126,6 +133,7 @@ echo "LFS_ROOT=$LFS_ROOT"
 echo
 
 run_step "check-prerequisites"      check_prerequisites
+run_step "setup-chroot-dns"         setup_chroot_dns
 run_step "install-base-packages"    install_base_packages
 run_step "install-variant-packages" install_variant_packages
 run_step "verify-install"           verify_install
