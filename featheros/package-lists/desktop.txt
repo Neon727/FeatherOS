@@ -11,9 +11,8 @@
 # trying to be a fully loaded "comes with everything" distro.
 
 xorg-server
-i3-wm
+i3wm
 i3status              # i3's default status bar module (feeds into i3bar below)
-i3bar                 # usually bundled with i3-wm, listed separately for clarity
 alsa-utils            # audio, if target hardware has sound
 networkmanager        # easier day-to-day Wi-Fi/network handling for general users
 
